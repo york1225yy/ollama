@@ -21,7 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo ""
 echo -e "${BLUE}本脚本将依次执行以下步骤:${NC}"
-echo "  1. 安装 NVIDIA 驱动 & Docker & NVIDIA Container Toolkit"
+echo "  1. 安装 Docker & NVIDIA Container Toolkit（跳过驱动安装，驱动已就绪）"
 echo "  2. 安装 Ollama & 部署 Qwen2.5-VL:7b 模型"
 echo "  3. 部署 Dify 平台"
 echo ""
@@ -35,7 +35,7 @@ fi
 # ========== Step 1: NVIDIA + Docker ==========
 echo ""
 echo -e "${BLUE}════════════════════════════════════════${NC}"
-echo -e "${BLUE}  Step 1/3: NVIDIA 驱动 & Docker 环境${NC}"
+echo -e "${BLUE}  Step 1/3: Docker & NVIDIA Container Toolkit${NC}"
 echo -e "${BLUE}════════════════════════════════════════${NC}"
 bash "$SCRIPT_DIR/install_nvidia.sh"
 

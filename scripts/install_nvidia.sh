@@ -1,13 +1,14 @@
 #!/bin/bash
 # ============================================================
-# NVIDIA 驱动和容器工具包安装脚本
+# Docker & NVIDIA Container Toolkit 安装脚本
 # 适用于 Ubuntu 22.04 / 24.04
+# 注意：假设 NVIDIA 驱动已提前安装完毕
 # ============================================================
 
 set -e
 
 echo "========================================="
-echo "  NVIDIA 驱动 & Container Toolkit 安装"
+echo "  Docker & NVIDIA Container Toolkit 安装"
 echo "========================================="
 
 # 颜色定义
@@ -22,32 +23,18 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# ========== 1. 检查 NVIDIA GPU ==========
-echo -e "\n${YELLOW}[1/5] 检查 NVIDIA GPU...${NC}"
-if lspci | grep -i nvidia > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ 检测到 NVIDIA GPU${NC}"
-    lspci | grep -i nvidia
+# ========== 前置验证：确认 NVIDIA 驱动已就绪 ==========
+echo -e "\n${YELLOW}[前置检查] 验证 NVIDIA 驱动...${NC}"
+if nvidia-smi > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ NVIDIA 驱动已就绪${NC}"
+    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
 else
-    echo -e "${RED}✗ 未检测到 NVIDIA GPU，请确认硬件${NC}"
+    echo -e "${RED}✗ nvidia-smi 执行失败，请确认 NVIDIA 驱动已正确安装后重试${NC}"
     exit 1
 fi
 
-# ========== 2. 安装 NVIDIA 驱动 ==========
-echo -e "\n${YELLOW}[2/5] 检查/安装 NVIDIA 驱动...${NC}"
-if nvidia-smi > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ NVIDIA 驱动已安装${NC}"
-    nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader
-else
-    echo "安装 NVIDIA 驱动..."
-    apt-get update
-    apt-get install -y ubuntu-drivers-common
-    ubuntu-drivers autoinstall
-    echo -e "${YELLOW}⚠ NVIDIA 驱动安装完成，可能需要重启系统${NC}"
-    echo "请重启后重新运行此脚本验证"
-fi
-
-# ========== 3. 安装 Docker ==========
-echo -e "\n${YELLOW}[3/5] 检查/安装 Docker...${NC}"
+# ========== 1. 安装 Docker ==========
+echo -e "\n${YELLOW}[1/3] 检查/安装 Docker...${NC}"
 if command -v docker > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Docker 已安装: $(docker --version)${NC}"
 else
@@ -70,8 +57,8 @@ else
     echo -e "${GREEN}✓ Docker 安装完成${NC}"
 fi
 
-# ========== 4. 安装 NVIDIA Container Toolkit ==========
-echo -e "\n${YELLOW}[4/5] 检查/安装 NVIDIA Container Toolkit...${NC}"
+# ========== 2. 安装 NVIDIA Container Toolkit ==========
+echo -e "\n${YELLOW}[2/3] 检查/安装 NVIDIA Container Toolkit...${NC}"
 if dpkg -l | grep -q nvidia-container-toolkit; then
     echo -e "${GREEN}✓ NVIDIA Container Toolkit 已安装${NC}"
 else
@@ -88,25 +75,17 @@ else
     echo -e "${GREEN}✓ NVIDIA Container Toolkit 安装完成${NC}"
 fi
 
-# ========== 5. 验证 ==========
-echo -e "\n${YELLOW}[5/5] 验证安装...${NC}"
-echo "--- NVIDIA 驱动 ---"
-if nvidia-smi > /dev/null 2>&1; then
-    nvidia-smi
-    echo -e "${GREEN}✓ NVIDIA 驱动正常${NC}"
-else
-    echo -e "${RED}✗ NVIDIA 驱动异常，请重启系统后重试${NC}"
-fi
+# ========== 3. 验证 ==========
+echo -e "\n${YELLOW}[3/3] 验证安装...${NC}"
 
-echo ""
 echo "--- Docker GPU 支持 ---"
 if docker run --rm --gpus all nvidia/cuda:12.0.0-base-ubuntu22.04 nvidia-smi > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Docker GPU 支持正常${NC}"
 else
-    echo -e "${YELLOW}⚠ Docker GPU 测试未通过，可能需要重启 Docker 服务${NC}"
+    echo -e "${YELLOW}⚠ Docker GPU 测试未通过，可能需要重启 Docker 服务: sudo systemctl restart docker${NC}"
 fi
 
 echo ""
-echo -e "${GREEN}========================================="
-echo "  环境检查完成！"
+echo -e "${GREEN}=========================================="
+echo "  Docker & NVIDIA Container Toolkit 安装完成！"
 echo "=========================================${NC}"
