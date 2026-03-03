@@ -17,18 +17,34 @@ NC='\033[0m'
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DIFY_DIR="$PROJECT_DIR/dify"
 
-# ========== 1. 检查 Docker ==========
+# ========== 1. 检查 Docker 可用性 ==========
 echo -e "\n${YELLOW}[1/4] 检查 Docker 环境...${NC}"
-if ! command -v docker > /dev/null 2>&1; then
-    echo -e "${RED}✗ Docker 未安装，请先运行 install_nvidia.sh${NC}"
+echo -e "${YELLOW}提示: 当前处于容器环境，Docker 需要宏机将 /var/run/docker.sock 挂载进来${NC}"
+
+# 确定可用的 docker compose 命令
+# 冂 v2 插件 (docker compose) 还是 standalone (docker-compose)
+if command -v docker > /dev/null 2>&1 && docker info > /dev/null 2>&1; then
+    if docker compose version > /dev/null 2>&1; then
+        COMPOSE_CMD="docker compose"
+    elif command -v docker-compose > /dev/null 2>&1; then
+        COMPOSE_CMD="docker-compose"
+    else
+        echo -e "${RED}✗ Docker Compose 不可用${NC}"
+        echo -e "请安装: pip install docker-compose 或向容器宏机管理员申请配置 Docker Compose"
+        exit 1
+    fi
+    echo -e "${GREEN}✓ Docker 可用，使用命令: $COMPOSE_CMD${NC}"
+else
+    echo -e "${RED}✗ Docker 不可用！${NC}"
+    echo ""
+    echo "容器环境下使用 Dify 需要昇机纳入 Docker socket。"
+    echo "请将导致指令转发给容器宏机管理员，要求重新启动容器时加上:"
+    echo "  -v /var/run/docker.sock:/var/run/docker.sock"
     exit 1
 fi
 
-if ! docker compose version > /dev/null 2>&1; then
-    echo -e "${RED}✗ Docker Compose 未安装${NC}"
-    exit 1
-fi
-echo -e "${GREEN}✓ Docker 和 Docker Compose 已就绪${NC}"
+# 将 COMPOSE_CMD 导出以便后续使用
+export COMPOSE_CMD
 
 # ========== 2. 克隆 Dify 仓库 ==========
 echo -e "\n${YELLOW}[2/4] 获取 Dify 源码...${NC}"
@@ -89,7 +105,7 @@ echo -e "${GREEN}✓ 环境变量配置完成${NC}"
 echo -e "\n${YELLOW}[4/4] 启动 Dify 服务...${NC}"
 echo "首次启动需要拉取 Docker 镜像，可能需要几分钟..."
 
-docker compose up -d
+$COMPOSE_CMD up -d
 
 # 等待服务就绪
 echo ""

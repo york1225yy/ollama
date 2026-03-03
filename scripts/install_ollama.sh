@@ -27,40 +27,35 @@ else
     echo -e "${GREEN}✓ Ollama 安装完成${NC}"
 fi
 
-# ========== 2. 配置 Ollama 环境 ==========
-echo -e "\n${YELLOW}[2/4] 配置 Ollama 服务...${NC}"
+# ========== 2. 以后台进程方式启动 Ollama ==========
+echo -e "\n${YELLOW}[2/4] 启动 Ollama 服务（容器环境，不使用 systemd）...${NC}"
 
-# 创建 Ollama systemd 覆盖配置，使其监听所有网络接口
-OLLAMA_SERVICE_DIR="/etc/systemd/system/ollama.service.d"
-if [ ! -f "$OLLAMA_SERVICE_DIR/override.conf" ]; then
-    echo "配置 Ollama 监听所有网络接口..."
-    sudo mkdir -p "$OLLAMA_SERVICE_DIR"
-    cat << 'EOF' | sudo tee "$OLLAMA_SERVICE_DIR/override.conf"
-[Service]
-Environment="OLLAMA_HOST=0.0.0.0:11434"
-Environment="OLLAMA_ORIGINS=*"
-EOF
-    sudo systemctl daemon-reload
-    sudo systemctl restart ollama
-    echo -e "${GREEN}✓ Ollama 已配置为监听 0.0.0.0:11434${NC}"
+# 检查是否已在运行
+if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Ollama 已在运行${NC}"
 else
-    echo -e "${GREEN}✓ Ollama 配置已存在${NC}"
-fi
+    echo "以后台进程方式启动 Ollama..."
+    export OLLAMA_HOST=0.0.0.0:11434
+    export OLLAMA_ORIGINS='*'
+    nohup ollama serve > /tmp/ollama.log 2>&1 &
+    OLLAMA_PID=$!
+    echo "$OLLAMA_PID" > /tmp/ollama.pid
+    echo "进程 PID: $OLLAMA_PID"
 
-# 等待 Ollama 服务启动
-echo "等待 Ollama 服务就绪..."
-for i in $(seq 1 30); do
-    if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
-        echo -e "${GREEN}✓ Ollama 服务已就绪${NC}"
-        break
-    fi
-    if [ "$i" -eq 30 ]; then
-        echo -e "${RED}✗ Ollama 服务启动超时${NC}"
-        echo "尝试手动启动: sudo systemctl start ollama"
-        exit 1
-    fi
-    sleep 2
-done
+    # 等待启动
+    echo "等待 Ollama API 就绪..."
+    for i in $(seq 1 30); do
+        if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+            echo -e "${GREEN}✓ Ollama 服务已就绪 (PID: $OLLAMA_PID)${NC}"
+            break
+        fi
+        if [ "$i" -eq 30 ]; then
+            echo -e "${RED}✗ Ollama 启动超时，请检查日志: tail -20 /tmp/ollama.log${NC}"
+            exit 1
+        fi
+        sleep 2
+    done
+fi
 
 # ========== 3. 拉取 Qwen2.5-VL 模型 ==========
 echo -e "\n${YELLOW}[3/4] 拉取 Qwen2.5-VL:7b 模型...${NC}"

@@ -21,9 +21,9 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 echo ""
 echo -e "${BLUE}本脚本将依次执行以下步骤:${NC}"
-echo "  1. 安装 Docker & NVIDIA Container Toolkit（跳过驱动安装，驱动已就绪）"
+echo "  1. 容器环境预棄（GPU / Docker socket / 依赖工具）"
 echo "  2. 安装 Ollama & 部署 Qwen2.5-VL:7b 模型"
-echo "  3. 部署 Dify 平台"
+echo "  3. 部署 Dify 平台（通过挂载的 Docker socket）"
 echo ""
 
 read -p "是否继续? (y/N): " confirm

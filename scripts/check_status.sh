@@ -30,10 +30,12 @@ fi
 
 # ========== 3. Ollama 状态 ==========
 echo -e "\n${YELLOW}[Ollama 状态]${NC}"
-if systemctl is-active --quiet ollama 2>/dev/null; then
-    echo -e "${GREEN}✓ Ollama 服务运行中 (systemd)${NC}"
-elif pgrep -x ollama > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ Ollama 进程运行中${NC}"
+if pgrep -x ollama > /dev/null 2>&1; then
+    OLLAMA_PID=$(pgrep -x ollama | head -1)
+    echo -e "${GREEN}✓ Ollama 进程运行中 (PID: $OLLAMA_PID)${NC}"
+    # 显示监听地址
+    LISTEN=$(ss -tlnp 2>/dev/null | grep ollama | awk '{print $4}' || true)
+    [ -n "$LISTEN" ] && echo "监听地址: $LISTEN"
 else
     echo -e "${RED}✗ Ollama 未运行${NC}"
 fi

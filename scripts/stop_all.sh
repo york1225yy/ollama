@@ -22,7 +22,13 @@ DIFY_DOCKER_DIR="$PROJECT_DIR/dify/docker"
 
 if [ -d "$DIFY_DOCKER_DIR" ]; then
     cd "$DIFY_DOCKER_DIR"
-    docker compose down
+    if docker compose version > /dev/null 2>&1; then
+        docker compose down
+    elif command -v docker-compose > /dev/null 2>&1; then
+        docker-compose down
+    else
+        echo -e "${YELLOW}⚠ Docker Compose 不可用，跳过 Dify 停止${NC}"
+    fi
     echo -e "${GREEN}✓ Dify 服务已停止${NC}"
 else
     echo -e "${YELLOW}⚠ Dify 目录不存在，跳过${NC}"
@@ -30,17 +36,22 @@ fi
 
 # ========== 2. 停止 Ollama ==========
 echo -e "\n${YELLOW}[2/2] 停止 Ollama 服务...${NC}"
-if systemctl is-active --quiet ollama 2>/dev/null; then
-    sudo systemctl stop ollama
-    echo -e "${GREEN}✓ Ollama 服务已停止${NC}"
-else
-    # 尝试杀掉进程
-    if pgrep -x ollama > /dev/null 2>&1; then
-        pkill ollama
-        echo -e "${GREEN}✓ Ollama 进程已终止${NC}"
+# 容器环境不使用 systemd，直接掉进程
+if [ -f /tmp/ollama.pid ]; then
+    PID=$(cat /tmp/ollama.pid)
+    if kill -0 "$PID" 2>/dev/null; then
+        kill "$PID"
+        rm -f /tmp/ollama.pid
+        echo -e "${GREEN}✓ Ollama 进程 (PID: $PID) 已终止${NC}"
     else
-        echo -e "${YELLOW}⚠ Ollama 未在运行${NC}"
+        rm -f /tmp/ollama.pid
+        echo -e "${YELLOW}⚠ PID 文件存在但进程已结束${NC}"
     fi
+elif pgrep -x ollama > /dev/null 2>&1; then
+    pkill -x ollama
+    echo -e "${GREEN}✓ Ollama 进程已终止${NC}"
+else
+    echo -e "${YELLOW}⚠ Ollama 未在运行${NC}"
 fi
 
 echo ""

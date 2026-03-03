@@ -18,20 +18,17 @@ PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
 # ========== 1. 启动 Ollama ==========
 echo -e "\n${YELLOW}[1/2] 启动 Ollama 服务...${NC}"
-if systemctl is-active --quiet ollama; then
-    echo -e "${GREEN}✓ Ollama 服务已在运行${NC}"
+if curl -s http://localhost:11434/api/tags > /dev/null 2>&1; then
+    echo -e "${GREEN}✓ Ollama 已在运行${NC}"
 else
-    sudo systemctl start ollama
+    echo "以后台进程方式启动 Ollama..."
+    export OLLAMA_HOST=0.0.0.0:11434
+    export OLLAMA_ORIGINS='*'
+    nohup ollama serve > /tmp/ollama.log 2>&1 &
+    OLLAMA_PID=$!
+    echo "$OLLAMA_PID" > /tmp/ollama.pid
+    echo "进程 PID: $OLLAMA_PID"
     sleep 3
-    if systemctl is-active --quiet ollama; then
-        echo -e "${GREEN}✓ Ollama 服务启动成功${NC}"
-    else
-        echo -e "${RED}✗ Ollama 服务启动失败${NC}"
-        echo "尝试手动启动: OLLAMA_HOST=0.0.0.0:11434 ollama serve &"
-        # 备用方案：直接启动
-        OLLAMA_HOST=0.0.0.0:11434 OLLAMA_ORIGINS=* nohup ollama serve > /tmp/ollama.log 2>&1 &
-        sleep 5
-    fi
 fi
 
 # 等待 Ollama 就绪
@@ -62,7 +59,13 @@ DIFY_DOCKER_DIR="$PROJECT_DIR/dify/docker"
 
 if [ -d "$DIFY_DOCKER_DIR" ]; then
     cd "$DIFY_DOCKER_DIR"
-    docker compose up -d
+    # 自动选择 docker compose 命令
+    if docker compose version > /dev/null 2>&1; then
+        COMPOSE_CMD="docker compose"
+    else
+        COMPOSE_CMD="docker-compose"
+    fi
+    $COMPOSE_CMD up -d
     echo -e "${GREEN}✓ Dify 服务启动命令已执行${NC}"
     
     # 等待 Dify 就绪
