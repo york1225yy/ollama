@@ -259,8 +259,9 @@ cd "$DIFY_DIR/web"
 # 创建 .env.local
 cat > .env.local << ENVEOF
 # Dify Web Frontend Configuration
-NEXT_PUBLIC_API_PREFIX=http://0.0.0.0:${DIFY_API_PORT}/console/api
-NEXT_PUBLIC_PUBLIC_API_PREFIX=http://0.0.0.0:${DIFY_API_PORT}/api
+# 使用相对路径，兼容 SSH 隧道、AutoDL 代理等所有访问方式
+NEXT_PUBLIC_API_PREFIX=/console/api
+NEXT_PUBLIC_PUBLIC_API_PREFIX=/api
 NEXT_PUBLIC_DEPLOY_ENV=PRODUCTION
 NEXT_PUBLIC_EDITION=SELF_HOSTED
 NEXT_PUBLIC_SENTRY_DSN=

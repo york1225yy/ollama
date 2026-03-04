@@ -139,17 +139,17 @@ else
     echo "  Node.js 版本满足要求: $(node --version)"
 fi
 
-# ---- 4b: 更新前端环境变量 ----
-echo "  API 地址将指向: http://${SERVER_IP}:${PUBLIC_PORT}"
-cat > "${DIFY_DIR}/web/.env.local" << ENVEOF
+# ---- 4b: 更新前端环境变量（使用相对路径，兼容 SSH 隧道/AutoDL 代理等所有访问方式）----
+cat > "${DIFY_DIR}/web/.env.local" << 'ENVEOF'
 # AutoDL 环境配置 - 由 05_setup_autodl.sh 自动生成
-NEXT_PUBLIC_API_PREFIX=http://${SERVER_IP}:${PUBLIC_PORT}/console/api
-NEXT_PUBLIC_PUBLIC_API_PREFIX=http://${SERVER_IP}:${PUBLIC_PORT}/api
+# 使用相对路径，浏览器 API 请求自动跟随当前访问地址，兼容所有访问方式
+NEXT_PUBLIC_API_PREFIX=/console/api
+NEXT_PUBLIC_PUBLIC_API_PREFIX=/api
 NEXT_PUBLIC_DEPLOY_ENV=PRODUCTION
 NEXT_PUBLIC_EDITION=SELF_HOSTED
 NEXT_PUBLIC_SENTRY_DSN=
 ENVEOF
-echo "  前端配置已写入 ${DIFY_DIR}/web/.env.local"
+echo "  前端配置已写入 ${DIFY_DIR}/web/.env.local（API 使用相对路径）"
 
 # ---- 4c: 停止旧进程 ----
 pkill -f "next.*start" 2>/dev/null || true
