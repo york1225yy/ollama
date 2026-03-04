@@ -10,7 +10,7 @@ set -e
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 source "$PROJECT_DIR/configs/env.conf" 2>/dev/null || true
 
-OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5-vl:7b}"
+OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5vl:7b}"
 
 echo "=========================================="
 echo "  [Step 1/3] 安装 Ollama..."

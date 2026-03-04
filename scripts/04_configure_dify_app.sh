@@ -12,7 +12,7 @@ source "$PROJECT_DIR/configs/env.conf" 2>/dev/null || true
 
 DIFY_API_PORT="${DIFY_API_PORT:-5001}"
 DIFY_WEB_PORT="${DIFY_WEB_PORT:-3000}"
-OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5-vl:7b}"
+OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5vl:7b}"
 DIFY_API_URL="http://localhost:${DIFY_API_PORT}"
 
 echo "=========================================="

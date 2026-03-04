@@ -49,9 +49,9 @@
 
 | 模型 | 参数量 | 显存占用 | 说明 |
 |------|--------|----------|------|
-| **qwen2.5-vl:7b** ✅ | 7B | ~8-12GB | **推荐**，24G 显存充裕，推理速度快 |
-| qwen2.5-vl:32b | 32B | ~20-24GB | 效果更好但显存紧张，推理较慢 |
-| qwen2.5-vl:3b | 3B | ~4-6GB | 轻量但分析能力有限 |
+| **qwen2.5vl:7b** ✅ | 7B | ~8-12GB | **推荐**，24G 显存充裕，推理速度快 |
+| qwen2.5vl:32b | 32B | ~20-24GB | 效果更好但显存紧张，推理较慢 |
+| qwen2.5vl:3b | 3B | ~4-6GB | 轻量但分析能力有限 |
 
 选择 **Qwen2.5-VL 7B** 的理由：
 - ✅ 支持图文多模态理解（Vision-Language），可以分析上传的面部照片
@@ -163,14 +163,14 @@ curl http://localhost:11434/api/tags
 
 # 测试文本对话
 curl http://localhost:11434/api/generate -d '{
-  "model": "qwen2.5-vl:7b",
+  "model": "qwen2.5vl:7b",
   "prompt": "你好，请简单介绍你自己",
   "stream": false
 }'
 
 # 测试多模态（图片+文字）
 curl http://localhost:11434/api/chat -d '{
-  "model": "qwen2.5-vl:7b",
+  "model": "qwen2.5vl:7b",
   "messages": [{
     "role": "user",
     "content": "描述这张图片中的人物特征",
@@ -285,7 +285,7 @@ tail -f /var/log/dify/web.log      # Dify Web 前端日志
 
 | 配置项 | 值 |
 |--------|-----|
-| 模型名称 | `qwen2.5-vl:7b` |
+| 模型名称 | `qwen2.5vl:7b` |
 | 基础 URL | `http://localhost:11434`（Dify 和 Ollama 同机部署） |
 | 模型类型 | LLM（大语言模型） |
 | 支持 Vision | ✅ 开启 |
@@ -308,7 +308,7 @@ tail -f /var/log/dify/web.log      # Dify Web 前端日志
 
 **4.1 选择模型**
 
-在编排页面选择 `Ollama → qwen2.5-vl:7b`
+在编排页面选择 `Ollama → qwen2.5vl:7b`
 
 **4.2 填写系统提示词**
 
@@ -407,7 +407,7 @@ ssh -L 3000:localhost:3000 -L 5001:localhost:5001 user@服务器IP
 
 ```bash
 # Ollama 模型选择
-OLLAMA_MODEL="qwen2.5-vl:7b"    # 可改为 :3b(轻量) 或 :32b(效果好但显存紧张)
+OLLAMA_MODEL="qwen2.5vl:7b"    # 可改为 :3b(轻量) 或 :32b(效果好但显存紧张)
 
 # 服务端口
 DIFY_API_PORT="5001"              # Dify API 后端
@@ -469,7 +469,7 @@ DIFY_DIR="/opt/dify"
 # 使用代理
 export http_proxy=http://your-proxy:port
 export https_proxy=http://your-proxy:port
-ollama pull qwen2.5-vl:7b
+ollama pull qwen2.5vl:7b
 ```
 
 ### Q2: Dify 前端构建失败？
