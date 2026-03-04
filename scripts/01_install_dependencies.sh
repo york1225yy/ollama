@@ -85,16 +85,16 @@ else
 fi
 
 echo "=========================================="
-echo "  [Step 6/7] 安装 Node.js 20.x..."
+echo "  [Step 6/7] 安装 Node.js 22.x..."
 echo "=========================================="
-if ! node --version 2>/dev/null | grep -q "v20"; then
-    curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+if ! node --version 2>/dev/null | grep -q "v22"; then
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
     apt-get install -y nodejs
     # 安装 pnpm 和 yarn（Dify 前端可能需要）
     npm install -g pnpm@9 yarn
-    echo "Node.js 20.x 安装完成"
+    echo "Node.js 22.x 安装完成"
 else
-    echo "Node.js 20.x 已安装，跳过"
+    echo "Node.js 22.x 已安装，跳过"
     npm install -g pnpm@9 yarn 2>/dev/null || true
 fi
 

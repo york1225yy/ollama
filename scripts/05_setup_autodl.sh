@@ -125,10 +125,22 @@ echo "Nginx 配置完成，监听端口 ${PUBLIC_PORT}"
 echo "=========================================="
 echo "  [Step 4/4] 重建 Dify 前端..."
 echo "=========================================="
-echo "  API 地址将指向: http://${SERVER_IP}:${PUBLIC_PORT}"
-echo ""
 
-# 更新前端环境变量
+# ---- 4a: 确保 Node.js >= 22 ----
+NODE_MAJOR=$(node --version 2>/dev/null | sed 's/v\([0-9]*\).*/\1/')
+if [ -z "$NODE_MAJOR" ] || [ "$NODE_MAJOR" -lt 22 ]; then
+    echo "  当前 Node.js 版本: $(node --version 2>/dev/null || echo '未安装')"
+    echo "  Dify 1.13+ 需要 Node.js >=22，正在升级..."
+    curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+    apt-get install -y nodejs
+    npm install -g pnpm@9 --force
+    echo "  Node.js 升级完成: $(node --version)"
+else
+    echo "  Node.js 版本满足要求: $(node --version)"
+fi
+
+# ---- 4b: 更新前端环境变量 ----
+echo "  API 地址将指向: http://${SERVER_IP}:${PUBLIC_PORT}"
 cat > "${DIFY_DIR}/web/.env.local" << ENVEOF
 # AutoDL 环境配置 - 由 05_setup_autodl.sh 自动生成
 NEXT_PUBLIC_API_PREFIX=http://${SERVER_IP}:${PUBLIC_PORT}/console/api
@@ -137,16 +149,24 @@ NEXT_PUBLIC_DEPLOY_ENV=PRODUCTION
 NEXT_PUBLIC_EDITION=SELF_HOSTED
 NEXT_PUBLIC_SENTRY_DSN=
 ENVEOF
+echo "  前端配置已写入 ${DIFY_DIR}/web/.env.local"
 
-echo "前端配置已写入 ${DIFY_DIR}/web/.env.local"
-
-# 停止旧的 Web 进程
+# ---- 4c: 停止旧进程 ----
 pkill -f "next.*start" 2>/dev/null || true
 sleep 2
 
-# 重新构建
+# ---- 4d: 安装依赖 + 构建 ----
 cd "${DIFY_DIR}/web"
-echo "开始构建前端（约需 2-5 分钟）..."
+echo "  安装前端依赖（node_modules）..."
+if [ -f "pnpm-lock.yaml" ]; then
+    pnpm install --frozen-lockfile 2>&1 | tail -3 || pnpm install 2>&1 | tail -3
+elif [ -f "yarn.lock" ]; then
+    yarn install --frozen-lockfile 2>&1 | tail -3
+else
+    npm install 2>&1 | tail -3
+fi
+
+echo "  开始构建前端（约需 3-8 分钟）..."
 if [ -f "pnpm-lock.yaml" ]; then
     pnpm build 2>&1 | tail -8
 elif [ -f "yarn.lock" ]; then
@@ -154,10 +174,10 @@ elif [ -f "yarn.lock" ]; then
 else
     npm run build 2>&1 | tail -8
 fi
-echo "前端构建完成"
+echo "  前端构建完成"
 
-# 重新启动 Web
-echo "启动 Dify Web..."
+# ---- 4e: 启动 Web ----
+echo "  启动 Dify Web..."
 mkdir -p /var/log/dify
 if [ -f "pnpm-lock.yaml" ]; then
     nohup pnpm start -p ${DIFY_WEB_PORT} -H 0.0.0.0 > /var/log/dify/web.log 2>&1 &
